@@ -126,19 +126,25 @@ app.put('/api/client/:clientId', authenticateToken, async (req, res) => {
 });
 
 app.get('/api/top-clients', authenticateToken, async (req, res) => {
-  try {
-    const topClients = await Client.find().sort({ totalBill: -1 }).limit(5);
-    const result = topClients.map((client) => ({
-      AgencyName: client.agencyId.name,
-      ClientName: client.name,
-      TotalBill: client.totalBill,
-    }));
-    res.status(200).json(result);
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: 'Server error' });
-  }
-});
+    try {
+      const topClients = await Client.find()
+        .sort({ totalBill: -1 })
+        .limit(5)
+        .populate('agencyId', 'name'); // Populate the agencyId field with the name property
+  
+      const result = topClients.map((client) => ({
+        AgencyName: client.agencyId.name,
+        ClientName: client.name,
+        TotalBill: client.totalBill,
+      }));
+  
+      res.status(200).json(result);
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ error: 'Server error' });
+    }
+  });
+  
 
 app.listen(port, () => {
   console.log(`Server is running on port ${port}`);
