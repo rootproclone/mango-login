@@ -36,17 +36,23 @@ app.use(bodyParser.json());
 
 const secretKey = process.env.SECRET_KEY || 'mn1f4mfulKNrMZ0aAqbrw';
 
-const authenticateToken = async (req, res, next) => {
-  try {
-    const token = req.header('Authorization');
-    if (!token) return res.sendStatus(401);
+const authenticateToken = (req, res, next) => {
+  const token = req.header('Authorization');
+  console.log('Received token:', token);
 
-    const user = await jwt.verify(token.split(' ')[1], secretKey);
+  if (!token) return res.sendStatus(401);
+
+  jwt.verify(token.split(' ')[1], secretKey, (err, user) => {
+    if (err) {
+      if (err.name === 'TokenExpiredError') {
+        return res.status(401).json({ message: 'Token has expired' });
+      }
+      console.error(err);
+      return res.status(403).json({ message: 'Invalid token' });
+    }
     req.user = user;
     next();
-  } catch (error) {
-    next(error);
-  }
+  });
 };
 
 app.use((err, req, res, next) => {
